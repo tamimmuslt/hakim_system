@@ -10,7 +10,7 @@ class AppointmentsController extends Controller
 {
     public function index()
     {
-        $appointments = Appointments::with(['user', 'doctor'])->get();
+        $appointments = Appointments::with(['user', 'doctor','service'])->get();
         return response()->json($appointments);
     }
 
@@ -19,6 +19,7 @@ class AppointmentsController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,user_id',
             'doctor_id' => 'required|exists:doctors,doctor_id',
+            'service_id' => 'required|exists:services,service_id',
             'appointment_datetime' => 'required|date',
             'status' => 'required|in:scheduled,completed,cancelled,no_show',
             'notes' => 'nullable|string',
@@ -34,7 +35,7 @@ class AppointmentsController extends Controller
 
     public function show($id)
     {
-        $appointment = Appointments::with(['user', 'doctor'])->find($id);
+        $appointment = Appointments::with(['user', 'doctor','service'])->find($id);
 
         if (!$appointment) {
             return response()->json(['message' => 'Appointment not found'], 404);
@@ -55,6 +56,7 @@ class AppointmentsController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'sometimes|exists:users,user_id',
             'doctor_id' => 'sometimes|exists:doctors,doctor_id',
+            'service_id' => 'sometimes|exists:services,service_id',
             'appointment_datetime' => 'sometimes|date',
             'status' => 'sometimes|in:scheduled,completed,cancelled,no_show',
             'notes' => 'nullable|string',

@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-
-class User extends Authenticatable implements JWTSubject
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+class User extends Authenticatable implements JWTSubject , MustVerifyEmail
 {
     use HasFactory, Notifiable,HasApiTokens;
 
@@ -19,10 +19,6 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at',
         'password',
         'remember_token',
-        'phone',
-        'birthdate',
-        'weight',
-        'blood_type',
         'user_type',
 
     ];
@@ -35,26 +31,26 @@ class User extends Authenticatable implements JWTSubject
     // علاقات المستخدم
     public function doctor()
     {
-        return $this->hasOne(Doctor::class, 'user_id');
+        return $this->hasOne(Doctor::class, 'user_id','user_id');
     }
 
     public function center()
 {
-    return $this->hasOne(Centers::class, 'user_id');
+    return $this->hasOne(Centers::class, 'user_id','user_id');
 }
     public function record()
     {
-        return $this->hasOne(MedicalRecords::class, 'user_id');
+        return $this->hasOne(MedicalRecords::class, 'user_id','user_id');
     }
 
     public function appointments()
     {
-        return $this->hasMany(Appointments::class, 'user_id');
+        return $this->hasMany(Appointments::class, 'user_id','user_id');
     }
 
     public function notifications()
     {
-        return $this->hasMany(Notifications::class, 'user_id');
+        return $this->hasMany(Notifications::class, 'user_id','user_id');
     }
 
     public function reviews()
@@ -87,4 +83,10 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+    public function patient()
+{
+    return $this->hasOne(Patient::class, 'user_id', 'user_id');
+}
+
+
 }

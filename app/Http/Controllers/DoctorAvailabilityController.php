@@ -5,19 +5,22 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DoctorAvailability;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class DoctorAvailabilityController extends Controller
 {
-    // عرض الأوقات لطبيب معين
     public function index($doctor_id)
     {
         $availability = DoctorAvailability::where('doctor_id', $doctor_id)->get();
         return response()->json($availability);
     }
 
-    // إضافة وقت جديد
     public function store(Request $request)
     {
+           $user = Auth::user();
+        if ($user->user_type !== 'Doctor' || !$user->doctor) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'doctor_id'   => 'required|exists:doctors,doctor_id',
             'day_of_week' => 'required|in:sunday,monday,tuesday,wednesday,thursday,friday,saturday',
@@ -34,9 +37,12 @@ class DoctorAvailabilityController extends Controller
         return response()->json($availability, 201);
     }
 
-    // تعديل وقت
     public function update(Request $request, $id)
     {
+          $user = Auth::user();
+        if ($user->user_type !== 'Doctor' || !$user->doctor) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         $availability = DoctorAvailability::find($id);
 
         if (!$availability) {

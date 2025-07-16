@@ -26,4 +26,9 @@ class LabTests extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
+    public function versions()
+{
+    return $this->hasMany(LabTestVersion::class, 'test_id');
+}
+
 }

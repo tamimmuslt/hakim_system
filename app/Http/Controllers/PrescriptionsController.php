@@ -6,23 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Models\Prescriptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class PrescriptionsController extends Controller
 {
-    /**
-     * عرض جميع الوصفات مع الطبيب والسجل المرتبط.
-     */
+    
     public function index()
     {
         $prescriptions = Prescriptions::with(['doctor', 'record'])->get();
         return response()->json($prescriptions);
     }
 
-    /**
-     * إنشاء وصفة طبية جديدة.
-     */
+    
     public function store(Request $request)
     {
+         $user = Auth::user();
+        if ($user->user_type !== 'Doctor' || !$user->doctor) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'record_id'       => 'required|exists:medical_records,record_id',
             'doctor_id'       => 'required|exists:doctors,doctor_id',
@@ -39,9 +41,7 @@ class PrescriptionsController extends Controller
         return response()->json($prescription, 201);
     }
 
-    /**
-     * عرض وصفة طبية واحدة مع علاقاتها.
-     */
+   
     public function show($id)
     {
         $prescription = Prescriptions::with(['doctor', 'record'])->find($id);
@@ -53,9 +53,7 @@ class PrescriptionsController extends Controller
         return response()->json($prescription);
     }
 
-    /**
-     * تعديل وصفة طبية.
-     */
+   
     public function update(Request $request, $id)
     {
         $prescription = Prescriptions::find($id);

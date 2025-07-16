@@ -16,11 +16,7 @@ return new class extends Migration
             $table->id('user_id');
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('phone',15)->nullable();
             $table->string('password');
-            $table->date('birthdate')->nullable();
-            $table->integer('weight')->nullable();
-            $table->string('blood_type',20)->nullable();
             $table->enum('user_type',['patient','Doctor','Center','Super_Admin']);
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken(); 

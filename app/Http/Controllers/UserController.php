@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    /**
-     * عرض الملف الشخصي
-     */
+ 
     public function profile()
     {
         $user = Auth::user();
@@ -20,16 +18,11 @@ class UserController extends Controller
             return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
         }
 
-        // تحميل العلاقة حسب نوع المستخدم
-switch ($user->user_type) {
-    case 'Center':
-        $user->load('Center');
-        break;
-
-    case 'Doctor':
-        $user->load('Doctor');
-        break;
-}
+        $user->loadMissing([
+            'doctor',
+            'center',
+            'record', // لعرض البيانات الطبية (مثل الوزن والزمرة...)
+        ]);
 
         return response()->json([
             'success' => true,
@@ -37,9 +30,7 @@ switch ($user->user_type) {
         ]);
     }
 
-    /**
-     * تعديل بيانات المستخدم
-     */
+   
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -49,12 +40,9 @@ switch ($user->user_type) {
         }
 
         $validator = Validator::make($request->all(), [
-            'name'       => 'sometimes|string|max:100',
-            'phone'      => 'nullable|string|max:15',
-            'birthdate'  => 'nullable|date',
-            'weight'     => 'nullable|integer',
-            'blood_type' => 'nullable|string|max:20',
-            'password'   => 'nullable|string|min:6',
+            'name'     => 'sometimes|string|max:100',
+            'phone'    => 'nullable|string|max:15',
+            'password' => 'nullable|string|min:6',
         ]);
 
         if ($validator->fails()) {
@@ -79,9 +67,7 @@ switch ($user->user_type) {
         ]);
     }
 
-    /**
-     * حذف حساب المستخدم (بعد التحقق من كلمة المرور)
-     */
+   
     public function destroy(Request $request)
     {
         $request->validate([

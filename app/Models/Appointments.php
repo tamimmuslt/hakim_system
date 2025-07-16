@@ -12,6 +12,7 @@ class Appointments extends Model
     [
  'user_id',
   'doctor_id', 
+  'service_id',
   'appointment_datetime',
    'status', 
    'notes'
@@ -31,4 +32,8 @@ class Appointments extends Model
     {
         return $this->hasone(MedicalRecords::class,'appointment_id');
     }
+    public function service()
+{
+    return $this->belongsTo(Services::class);
+}
 }

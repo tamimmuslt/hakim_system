@@ -12,8 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'verifyEmailCode' => \App\Http\Middleware\EnsureEmailisverfied::class,
+        ]);
     })
+   ->withSchedule(function (Illuminate\Console\Scheduling\Schedule $schedule) {
+    (new \App\Scheduling\SendAppointmentReminder())->__invoke($schedule);
+})
+    
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    ->create();

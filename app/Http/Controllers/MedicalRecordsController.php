@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MedicalRecords;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class MedicalRecordsController extends Controller
 {
@@ -26,6 +27,11 @@ class MedicalRecordsController extends Controller
    
     public function store(Request $request)
     {
+         $user = Auth::user();
+        if ($user->user_type !== 'Doctor' || !$user->doctor) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'user_id'         => 'required|exists:users,user_id',
             'appointment_id'  => 'required|exists:appointments,appointment_id',
@@ -66,6 +72,11 @@ class MedicalRecordsController extends Controller
   
     public function update(Request $request, $id)
     {
+         $user = Auth::user();
+        if ($user->user_type !== 'Doctor' || !$user->doctor) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $record = MedicalRecords::find($id);
 
         if (!$record) {

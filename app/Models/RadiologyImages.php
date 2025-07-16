@@ -26,4 +26,8 @@ class RadiologyImages extends Model
      {
         return $this->belongsTo(User::class,'uploaded_by');
     }
+    public function versions()
+{
+    return $this->hasMany(RadiologyImageVersion::class, 'radiology_image_id');
+}
 }

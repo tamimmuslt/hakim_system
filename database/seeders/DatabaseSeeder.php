@@ -36,10 +36,10 @@ class DatabaseSeeder extends Seeder
 // Promotions::truncate();
 // DoctorAvailability::truncate();
         // Users
-        User::create(['name' => 'Admin', 'email' => 'admin@test.com', 'password' => Hash::make('123456'), 'user_type' => 'Super_Admin']);
-        User::create(['name' => 'Dr. rasheed', 'email' => 'dr@test.com', 'password' => Hash::make('333333'), 'user_type' => 'doctor']);
-        User::create(['name' => 'Patient belal', 'email' => 'patient@test.com', 'password' => Hash::make('0000111'), 'user_type' => 'patient']);
-        User::create(['name' => 'مركز الحكمة', 'email' => 'hakma@test.com', 'password' => Hash::make('0001111'), 'user_type' => 'center']);
+        User::create(['name' => 'Admin', 'email' => 'admin123@gmail.com', 'password' => Hash::make('123456'), 'user_type' => 'Super_Admin']);
+        User::create(['name' => 'Dr. rasheed', 'email' => 'dr@gmail.com', 'password' => Hash::make('333333'), 'user_type' => 'doctor']);
+        User::create(['name' => 'Patient belal', 'email' => 'patient@gmail.com', 'password' => Hash::make('0000111'), 'user_type' => 'patient']);
+        User::create(['name' => 'مركز الحكمة', 'email' => 'hakma@gmail.com', 'password' => Hash::make('0001111'), 'user_type' => 'center']);
 
         Doctor::create(['user_id' => 2, 'specialty' => 'عظمية', 'phone' => '0991112222']);
 
@@ -53,7 +53,13 @@ class DatabaseSeeder extends Seeder
         $center->services()->attach([ $service->service_id => ['price' => 20]]);
 
         // Appointments
-        Appointments::create(['user_id' => 3, 'doctor_id' => 1, 'appointment_datetime' => now()->addDays(1), 'status' => 'scheduled', 'notes' => 'مراجعة دورية']);
+        Appointments::create( 
+           [ 'user_id' => 3,
+    'doctor_id' => 1,
+    'service_id' => 1,
+    'appointment_datetime' => '2025-07-08 09:12:14',
+    'status' => 'scheduled',
+    'notes' => 'مراجعة دورية',]);
 
         // Medical Records
         MedicalRecords::create(['user_id' => 3, 'appointment_id' => 1, 'diagnosis' => 'حرارة', 'start_date' => now(), 'end_date' => now()->addDays(5)]);
@@ -68,7 +74,7 @@ class DatabaseSeeder extends Seeder
         RadiologyImages::create(['record_id' => 1, 'uploaded_by' => 2, 'image_url' => 'http://example.com/image.jpg', 'description' => 'صورة أشعة للصدر']);
 
         // Service Booking
-        ServiceBookings::create(['user_id' => 3, 'service_id' => 1, 'booking_datetime' => now()->addDays(2), 'status' => 'confirmed']);
+        ServiceBookings::create(['user_id' => 3, 'service_id' => 1, 'booking_datetime' => now()->addDays(value: 2), 'status' => 'confirmed']);
 
         // Review
         Reviews::create(['user_id' => 3, 'reviewable_type' => 'App\\Models\\Doctor', 'reviewable_id' => 1, 'rating' => 5, 'comment' => 'دكتور ممتاز']);

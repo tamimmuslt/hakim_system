@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Reviews;
@@ -9,18 +9,14 @@ use Illuminate\Support\Facades\Validator;
 
 class ReviewsController extends Controller
 {
-    /**
-     * عرض جميع التقييمات مع معلومات المستخدم.
-     */
+    
     public function index()
     {
         $reviews = Reviews::with('user')->get();
         return response()->json($reviews);
     }
 
-    /**
-     * إنشاء تقييم جديد.
-     */
+   
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -39,9 +35,6 @@ class ReviewsController extends Controller
         return response()->json($review, 201);
     }
 
-    /**
-     * عرض تقييم محدد.
-     */
     public function show($id)
     {
         $review = Reviews::with('user')->find($id);
@@ -53,9 +46,7 @@ class ReviewsController extends Controller
         return response()->json($review);
     }
 
-    /**
-     * حذف تقييم.
-     */
+    
     public function destroy($id)
     {
         $review = Reviews::find($id);

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\Log;
 class Doctor extends Model
 {
     protected $primaryKey='doctor_id';
@@ -47,5 +47,29 @@ class Doctor extends Model
 {
     return round($this->reviews()->whereBetween('rating', [1, 5])->avg('rating'), 1);
 }
+
+ public function service()
+{
+    return $this->belongsTo(Services::class, 'service_id'); 
+}
+protected static function boot()
+    {
+        parent::boot();
+
+        // عند إنشاء طبيب
+        static::created(function ($doctor) {
+            Log::info("📋 طبيب جديد تم إنشاؤه: " . $doctor->user->name);
+        });
+
+        // عند تعديل الطبيب
+        static::updated(function ($doctor) {
+            Log::info("✏️ تعديل بيانات طبيب: " . $doctor->user->name);
+        });
+
+        // عند حذف الطبيب
+        static::deleted(function ($doctor) {
+            Log::warning("❌ حذف طبيب: " . $doctor->user->name);
+        });
+    }
 
 }

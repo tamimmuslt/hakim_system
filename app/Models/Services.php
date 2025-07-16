@@ -8,7 +8,7 @@ class Services extends Model
 {
     protected $primaryKey = 'service_id';
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description','requires_doctor','doctor_id'];
 
     public function centers() 
     {
@@ -29,4 +29,15 @@ class Services extends Model
 {
     return round($this->reviews()->whereBetween('rating', [1, 5])->avg('rating'), 1);
 }
+
+public function appointments()
+{
+    return $this->hasMany(Appointments::class);
+}
+public function doctors()
+{
+    return $this->hasMany(Doctor::class, 'service_id');
+}
+
+
 }

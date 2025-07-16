@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceBookings;
@@ -9,10 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ServicesbookingController extends Controller
 {
-    /**
-     * عرض جميع الحجوزات مع بيانات المستخدم والخدمة.
-     */
-    public function index()
+        public function index()
     {
         $bookings = ServiceBookings::with(['user', 'service'])->latest()->get();
 
@@ -22,9 +19,7 @@ class ServicesbookingController extends Controller
         ]);
     }
 
-    /**
-     * إنشاء حجز جديد.
-     */
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -39,7 +34,7 @@ class ServicesbookingController extends Controller
             return response()->json([
                 'success' => false,
                 'errors'  => $validator->errors()
-            ], 422);
+            ], 200);
         }
 
         $booking = ServiceBookings::create($validator->validated());
@@ -51,9 +46,7 @@ class ServicesbookingController extends Controller
         ], 201);
     }
 
-    /**
-     * عرض حجز معين.
-     */
+   
     public function show($id)
     {
         $booking = ServiceBookings::with(['user', 'service'])->find($id);
@@ -71,9 +64,7 @@ class ServicesbookingController extends Controller
         ]);
     }
 
-    /**
-     * تحديث حجز.
-     */
+   
     public function update(Request $request, $id)
     {
         $booking = ServiceBookings::find($id);
@@ -107,9 +98,7 @@ class ServicesbookingController extends Controller
         ]);
     }
 
-    /**
-     * حذف حجز.
-     */
+   
     public function destroy($id)
     {
         $booking = ServiceBookings::find($id);

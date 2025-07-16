@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\Log;
 class Centers extends Model
 {
     protected $primaryKey ='center_id';
@@ -16,7 +16,8 @@ class Centers extends Model
          'type',
          'phone',
           'latitude',
-          'longitude'
+          'longitude',
+          'is_approved'
     ];
 
     public function doctors()
@@ -26,7 +27,7 @@ class Centers extends Model
 
     public function user()
 {
-    return $this->belongsTo(User::class, 'user_id');
+    return $this->belongsTo(User::class, 'user_id','user_id');
 }
 
     public function services() 
@@ -41,11 +42,27 @@ class Centers extends Model
 
     public function reviews()
     {
-        return $this->morphMany(Reviews::class,'reviwable');
+        return $this->morphMany(Reviews::class,'reviewable');
     }
 
     public function averageRating()
 {
     return round($this->reviews()->whereBetween('rating', [1, 5])->avg('rating'), 1);
 }
+ protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($center) {
+            Log::info("🏥 مركز طبي جديد تم إنشاؤه: " . $center->user->name);
+        });
+
+        static::updated(function ($center) {
+            Log::info("🔧 تعديل بيانات مركز طبي: " . $center->user->name);
+        });
+
+        static::deleted(function ($center) {
+            Log::warning("🚫 تم حذف مركز طبي: " . $center->user->name);
+        });
+    }
 }
