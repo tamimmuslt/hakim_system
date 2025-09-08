@@ -171,31 +171,31 @@ class AdminController extends Controller
 
    
 
-public function addPromotion(Request $request)
-{
-    if (auth('api')->user()->user_type !== 'Super_Admin') {
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
+// public function addPromotion(Request $request)
+// {
+//     if (auth('api')->user()->user_type !== 'Center') {
+//         return response()->json(['message' => 'Unauthorized'], 403);
+//     }
 
-    $validator = Validator::make($request->all(), [
-        'center_id'           => 'required|exists:centers,center_id',
-        'title'               => 'required|string|max:150',
-        'description'         => 'required|string',
-        'start_date'          => 'required|date',
-        'end_date'            => 'required|date|after_or_equal:start_date',
-        'discount_percent'    => 'required|numeric|min:0|max:100',
-        'price_after_discount'=> 'required|numeric|min:0',
-        'is_active'           => 'sometimes|boolean',
-    ]);
+//     $validator = Validator::make($request->all(), [
+//         'center_id'           => 'required|exists:centers,center_id',
+//         'title'               => 'required|string|max:150',
+//         'description'         => 'required|string',
+//         'start_date'          => 'required|date',
+//         'end_date'            => 'required|date|after_or_equal:start_date',
+//         'discount_percent'    => 'required|numeric|min:0|max:100',
+//         'price_after_discount'=> 'required|numeric|min:0',
+//         'is_active'           => 'sometimes|boolean',
+//     ]);
 
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
-    }
+//     if ($validator->fails()) {
+//         return response()->json(['errors' => $validator->errors()], 422);
+//     }
 
-    $promotion = Promotions::create($validator->validated());
+//     $promotion = Promotions::create($validator->validated());
 
-    return response()->json(['message' => 'Promotion created', 'promotion' => $promotion]);
-}
+//     return response()->json(['message' => 'Promotion created', 'promotion' => $promotion]);
+// }
 
 public function approvePromotion($id)
 {

@@ -6,15 +6,35 @@ use App\Http\Controllers\Controller;
 use App\Models\Reviews;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class ReviewsController extends Controller
 {
-    
     public function index()
-    {
-        $reviews = Reviews::with('user')->get();
-        return response()->json($reviews);
+{
+    $user = Auth::user();
+
+    if ($user->role === 'doctor') {
+        $doctor = $user->doctor; 
+        $reviews = Reviews::with('user')
+            ->where('reviewable_type', 'App\Models\Doctor')
+            ->where('reviewable_id', $doctor->id)
+            ->get();
+
+    } elseif ($user->role === 'center') {
+        $center = $user->center; 
+        $reviews = Reviews::with('user')
+            ->where('reviewable_type', 'App\Models\Center')
+            ->where('reviewable_id', $center->id)
+            ->get();
+
+    } else {
+        return response()->json(['message' => 'غير مسموح لك بمشاهدة التقييمات'], 403);
     }
+
+    return response()->json($reviews);
+}
 
    
     public function store(Request $request)

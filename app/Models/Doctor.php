@@ -10,8 +10,10 @@ class Doctor extends Model
 
     protected $fillable=[
         'user_id',
-        'specialty'
-        ,'phone'];
+        'specialty',
+        'phone',
+        'bio',
+    'service_id'];
 
         public function user()
         {
@@ -50,7 +52,7 @@ class Doctor extends Model
 
  public function service()
 {
-    return $this->belongsTo(Services::class, 'service_id'); 
+    return $this->belongsTo(Services::class, 'service_id','service_id'); 
 }
 protected static function boot()
     {
@@ -71,5 +73,11 @@ protected static function boot()
             Log::warning("❌ حذف طبيب: " . $doctor->user->name);
         });
     }
+
+
+    public function reports()
+{
+    return $this->morphMany(Reports::class, 'reportable');
+}
 
 }

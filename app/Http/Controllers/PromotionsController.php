@@ -32,7 +32,7 @@ $promotions = Promotions::with('center')->where('is_active', true)->get();
         'end_date'            => 'required|date|after_or_equal:start_date',
         'discount_percent'    => 'required|numeric|min:0|max:100',
         'price_after_discount'=> 'required|numeric|min:0',
-         //'is_active' => 'sometimes|boolean',
+         'is_active' => 'sometimes|boolean',
     ]);
 
     if ($validator->fails()) {

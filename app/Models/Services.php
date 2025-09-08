@@ -8,7 +8,7 @@ class Services extends Model
 {
     protected $primaryKey = 'service_id';
 
-    protected $fillable = ['name', 'description','requires_doctor','doctor_id'];
+    protected $fillable = ['name', 'description','requires_doctor'];
 
     public function centers() 
     {
@@ -36,7 +36,7 @@ public function appointments()
 }
 public function doctors()
 {
-    return $this->hasMany(Doctor::class, 'service_id');
+    return $this->hasMany(Doctor::class, 'service_id',localKey: 'service_id');
 }
 
 

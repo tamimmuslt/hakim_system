@@ -14,7 +14,15 @@ class LabTestsController extends Controller
 {
   
     public function index()
-    {
+    {      $user = Auth::user();
+
+if (
+    ($user->user_type !== 'Doctor' || !$user->doctor) &&
+    ($user->user_type !== 'Patient' || !$user->patient)
+)
+ {
+    return response()->json(['message' => 'Unauthorized'], 403);
+}
         $labTests = LabTests::with(['record', 'uploader.doctor'])->get();
 
         return response()->json([
@@ -52,9 +60,9 @@ if ($user->user_type !== 'Doctor' || !$user->doctor?->is_approved) {
     return response()->json(['message' => 'Only approved doctors can upload data'], 403);
 }
         $filePath = null;
-        if ($request->hasFile('result_file')) {
+        if ($request->hasFile('result')) {
            
-            $filePath = $request->file('result_file')->store('lab_tests', 'public');
+            $filePath = $request->file('result')->store('lab_tests', 'public');
         }
 
        

@@ -6,10 +6,42 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Appointments;
 
 class UserController extends Controller
 {
  
+    // public function profile()
+    // {
+    //     $user = Auth::user();
+
+    //     if (!$user) {
+    //         return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
+    //     }
+
+    //     $user->loadMissing([
+    //         'doctor',
+    //         'center',
+    //         'record', 
+    //     ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'user' => $user
+    //     ]);
+    // }
+    
+
+// namespace App\Http\Controllers;
+
+// use Illuminate\Http\Request;
+// use Illuminate\Support\Facades\Hash;
+// use Illuminate\Support\Facades\Auth;
+// use Illuminate\Support\Facades\Validator;
+// use App\Models\Appointments;
+
+// class UserController extends Controller
+// {
     public function profile()
     {
         $user = Auth::user();
@@ -18,17 +50,44 @@ class UserController extends Controller
             return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
         }
 
+        // تحميل العلاقات المرتبطة
         $user->loadMissing([
             'doctor',
             'center',
-            'record', // لعرض البيانات الطبية (مثل الوزن والزمرة...)
+            'record',
         ]);
+
+        // المواعيد حسب نوع المستخدم (user_type)
+        if ($user->user_type === 'admin') {
+            // الأدمن يشوف الكل
+            $appointments = Appointments::with(['user', 'doctor', 'service'])->get();
+        } elseif ($user->user_type === 'doctor') {
+            // الدكتور يشوف مواعيده
+            $appointments = Appointments::with(['user', 'service'])
+                ->where('doctor_id', $user->doctor->doctor_id)
+                ->get();
+        } elseif ($user->user_type === 'clinic') {
+            // المركز يشوف المواعيد اللي عنده
+            $appointments = Appointments::with(['user', 'doctor', 'service'])
+                ->where('clinic_id', $user->center->center_id) // لازم يكون عندك clinic_id بجدول appointments
+                ->get();
+        } else {
+            // المريض
+            $appointments = Appointments::with(['doctor', 'service'])
+                ->where('user_id', $user->user_id)
+                ->get();
+        }
 
         return response()->json([
             'success' => true,
-            'user' => $user
+            'user' => $user,
+            'appointments' => $appointments
         ]);
     }
+
+    // update() و destroy() مثل ما عندك بدون تغيير
+
+
 
    
     public function update(Request $request)

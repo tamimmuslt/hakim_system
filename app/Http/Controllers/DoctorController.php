@@ -30,6 +30,8 @@ class DoctorController extends Controller
         'password'  => 'required|string|min:6',
         'specialty' => 'required|string',
         'phone'     => 'required|string|max:20',
+        'service_id' => 'required|exists:Services,service_id', // <== أضف هذا
+
     ]);
 
     if ($validator->fails()) {
@@ -44,12 +46,15 @@ class DoctorController extends Controller
         'is_email_verified' => false,
     ]);
 
-    $doctor = Doctor::create([
-        'user_id'   => $user->user_id,
-        'specialty' => $request->specialty,
-        'phone'     => $request->phone,
-        'is_approved' => false,  
-    ]);
+  $doctor = Doctor::create([
+    'user_id'   => $user->user_id,
+    'specialty' => $request->specialty,
+    'phone'     => $request->phone,
+    'service_id'=> $request->service_id,
+    'bio'       => $request->bio ?? null, 
+    'is_approved' => false,
+]);
+
 
     $centerUser->center->doctors()->syncWithoutDetaching($doctor->doctor_id);
 
@@ -72,26 +77,56 @@ class DoctorController extends Controller
         return response()->json(['message' => 'Doctor approved successfully']);
     }
 
-    public function update(Request $request)
-    {
-        $user = Auth::user();
-        if ($user->user_type !== 'Doctor' || !$user->doctor) {
+public function update(Request $request, $doctor_id)
+{
+    $user = auth('api')->user();
+
+    // جلب الطبيب مع تحديد الجدول لتجنب ambiguity
+    $doctor = Doctor::select('doctors.*')->find($doctor_id);
+    if (!$doctor) {
+        return response()->json(['message' => 'Doctor not found'], 404);
+    }
+
+    // التحقق من الصلاحية: المركز المرتبط أو الطبيب نفسه
+    if ($user->user_type === 'Doctor') {
+        // حدد جدول doctors هنا
+        if ($user->doctor->doctor_id !== $doctor_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-
-        $doctor = $user->doctor;
-
-        $validator = Validator::make($request->all(), [
-            'specialty' => 'sometimes|string',
-            'phone'     => 'sometimes|string|max:20',
-        ]);
-
-        if ($validator->fails()) return response()->json(['errors' => $validator->errors()], 422);
-
-        $doctor->update($validator->validated());
-
-        return response()->json($doctor);
+    } elseif ($user->user_type === 'Center') {
+        // حدد جدول pivot عند التحقق من العلاقة
+        $centerDoctorIds = $user->center->doctors()->pluck('doctors.doctor_id')->toArray();
+        if (!in_array($doctor_id, $centerDoctorIds)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+    } else {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    // قواعد التحقق
+  $validator = Validator::make($request->all(), [
+    'specialty'  => 'sometimes|string|max:255',
+    'phone'      => 'sometimes|string|max:20',
+    'service_id' => 'sometimes|exists:services,service_id',
+    'bio'        => 'sometimes|string', // 👈 السماح بتحديث الوصف
+]);
+
+// $doctor->update($validator->validated());
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    // تحديث البيانات
+    $doctor->update($validator->validated());
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Doctor updated successfully',
+        'data' => $doctor->load('user', 'centers', 'service')
+    ]);
+}
+
 
     public function destroy($id)
     {

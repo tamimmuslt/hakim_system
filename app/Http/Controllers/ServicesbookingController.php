@@ -20,51 +20,42 @@ class ServicesbookingController extends Controller
     }
 
 
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'user_id'          => 'required|exists:users,user_id',
-            'service_id'       => 'required|exists:services,service_id',
-            'booking_datetime' => 'required|date|after_or_equal:now',
-            'status'           => 'required|in:pending,confirmed,completed,cancelled',
-            'notes'            => 'nullable|string'
-        ]);
+public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'user_id'          => 'required|exists:users,user_id',
+        'service_id'       => 'required|exists:services,service_id',
+        'booking_datetime' => 'required|date|after_or_equal:now',
+        'status'           => 'required|in:pending,confirmed,completed,cancelled',
+        'notes'            => 'nullable|string'
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors'  => $validator->errors()
-            ], 200);
-        }
-
-        $booking = ServiceBookings::create($validator->validated());
-
+    if ($validator->fails()) {
         return response()->json([
-            'success' => true,
-            'message' => 'Service booking created successfully',
-            'data'    => $booking
-        ], 201);
+            'success' => false,
+            'errors'  => $validator->errors()
+        ], 422);
     }
 
-   
-    public function show($id)
-    {
-        $booking = ServiceBookings::with(['user', 'service'])->find($id);
-
-        if (!$booking) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Booking not found'
-            ], 404);
-        }
-
+    // ✅ التحقق أن الخدمة لا تحتاج طبيب
+    $service = \App\Models\Services::find($request->service_id);
+    if ($service->requires_doctor) {
         return response()->json([
-            'success' => true,
-            'data' => $booking
-        ]);
+            'success' => false,
+            'message' => 'This service requires a doctor, please create an appointment instead.'
+        ], 400);
     }
 
-   
+    // ✅ إنشاء الحجز
+    $booking = ServiceBookings::create($validator->validated());
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Service booking created successfully',
+        'data'    => $booking
+    ], 201);
+}
+
     public function update(Request $request, $id)
     {
         $booking = ServiceBookings::find($id);

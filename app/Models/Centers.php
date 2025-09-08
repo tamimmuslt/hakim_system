@@ -65,4 +65,9 @@ class Centers extends Model
             Log::warning("🚫 تم حذف مركز طبي: " . $center->user->name);
         });
     }
+    public function reports()
+{
+    return $this->morphMany(Reports::class, 'reportable');
+}
+
 }

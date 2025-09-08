@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::table('services', function (Blueprint $table) {
 Schema::table('services', function (Blueprint $table) {
-    $table->boolean('requires_doctor')->default(true);
+    $table->boolean('requires_doctor')->default(false);
 
 });
         });

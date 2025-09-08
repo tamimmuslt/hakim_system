@@ -14,6 +14,8 @@ class ServicesController extends Controller
    
     public function index()
 {
+    // $services = Services::with(relations: ['doctors', 'centers'])->latest()->get();
+
     $services = Services::with([
         'doctors.user', 
         'centers' => function ($query) {
@@ -27,9 +29,7 @@ class ServicesController extends Controller
     ]);
 }
 
-    /**
-     * إنشاء خدمة جديدة وربطها بالمركز الحالي مع تحديد السعر.
-     */
+    
     public function store(Request $request)
 {
     $user = Auth::user();
@@ -43,9 +43,10 @@ class ServicesController extends Controller
 
     $validator = Validator::make($request->all(), [
         'name'=> 'required|string|max:100',
-        'doctor_id'   => 'required|exists:doctors,doctor_id',   
+        // 'doctor_id'   => 'required|exists:doctors,doctor_id',   
         'description' => 'nullable|string|max:500',
-        'price'       => 'required|numeric|min:0'
+        'price'       => 'required|numeric|min:0',
+'requires_doctor' => 'required|boolean',
     ]);
 
     if ($validator->fails()) {
@@ -55,7 +56,11 @@ class ServicesController extends Controller
         ], 422);
     }
 
-    $service = Services::create($request->only(['name', 'description']));
+$service = Services::create([
+    'name'            => $request->name,
+    'description'     => $request->description,
+    'requires_doctor' => $request->requires_doctor,
+]);
 
     $user->center->services()->attach($service->service_id, [
         'price' => $request->price
@@ -94,9 +99,7 @@ class ServicesController extends Controller
         ]);
     }
 
-    /**
-     * تحديث بيانات خدمة.
-     */
+    
     public function update(Request $request, $id)
 {
       $user = Auth::user();
@@ -104,7 +107,7 @@ class ServicesController extends Controller
     if (!$user || $user->user_type !== 'Center') {
         return response()->json([
             'success' => false,
-            'message' => 'Only centers can create services'
+            'message' => 'Only centers can update services'
         ], 403);
     }
     $service = Services::find($id);
@@ -168,14 +171,16 @@ public function destroy($id)
 }
 
 
-public function checkServiceType($id)
+public function checkServiceType($service_id)
 {
-    $service = Services::findOrFail($id);
+    $service = Services::findOrFail($service_id);
 
     if ($service->requires_doctor) {
+
         return response()->json(['type' => 'appointment']);
     } else {
         return response()->json(['type' => 'service_booking']);
     }
 }
+
 }

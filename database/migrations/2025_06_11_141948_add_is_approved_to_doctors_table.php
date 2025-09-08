@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('doctors', function (Blueprint $table) {
-                               $table->boolean('is_approved')->default(false)->after('phone'); // حدد المكان حسب الحاجة
+      $table->boolean('is_approved')->default(false)->after('phone'); // حدد المكان حسب الحاجة
 
         });
     }

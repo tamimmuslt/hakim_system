@@ -97,6 +97,7 @@ class CentersController extends Controller
         'password' => 'required|string|min:6',
         'specialty' => 'required|string',
         'phone'=>'required|string',
+        'service_id' => 'required|exists:services,service_id', // <== أضف هذا
     ]);
 
     if ($validator->fails()) {
@@ -116,6 +117,8 @@ class CentersController extends Controller
         'user_id' => $newUser->user_id,
         'specialty' => $request->specialty,
           'phone'     => $request->phone,
+         'service_id' => $request->service_id, // <== ربط الخدمة
+
     ]);
     $doctor->save();
 

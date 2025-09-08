@@ -13,6 +13,15 @@ class PrescriptionsController extends Controller
     
     public function index()
     {
+        $user = Auth::user();
+
+if (
+    ($user->user_type !== 'Doctor' || !$user->doctor) &&
+    ($user->user_type !== 'Patient' || !$user->patient)
+) {
+    return response()->json(['message' => 'Unauthorized'], 403);
+}
+
         $prescriptions = Prescriptions::with(['doctor', 'record'])->get();
         return response()->json($prescriptions);
     }

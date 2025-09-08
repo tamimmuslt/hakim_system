@@ -29,7 +29,7 @@ class RadiologyImagesController extends Controller
   
         $validator = Validator::make($request->all(), [
             'record_id'   => 'required|exists:medical_records,record_id',
-            'image_file'  => 'required|image|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+            'image_url'  => 'required|image|mimes:jpeg,png,jpg,gif,pdf|max:2048',
             'description' => 'nullable|string'
         ]);
 
@@ -43,7 +43,7 @@ class RadiologyImagesController extends Controller
             return response()->json(['message' => 'Only approved doctors can upload data'], 403);
         }
 
-        $path = $request->file('image_file')->store('radiology', 'public');
+        $path = $request->file('image_url')->store('radiology', 'public');
 
         $image = RadiologyImages::create([
             'record_id'   => $request->record_id,
@@ -83,7 +83,7 @@ class RadiologyImagesController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'image_file'=> 'sometimes|image|mimes:jpeg,png,jpg,gif,pdf|max:2048',
+            'image_url'=> 'sometimes|image|mimes:jpeg,png,jpg,gif,pdf|max:2048',
             'description' => 'sometimes|nullable|string',
         ]);
 
@@ -93,7 +93,7 @@ class RadiologyImagesController extends Controller
 
         $data = $validator->validated();
 
-        if ($request->hasFile('image_file')) {
+        if ($request->hasFile('image_url')) {
     if ($image->image_url) {
         \App\Models\RadiologyImageVersion::create([
             'radiology_image_id' => $image->image_id,
@@ -105,7 +105,7 @@ class RadiologyImagesController extends Controller
         Storage::disk('public')->delete($oldPath);
     }
 
-    $path = $request->file('image_file')->store('radiology', 'public');
+    $path = $request->file('image_url')->store('radiology', 'public');
     $data['image_url'] = Storage::url($path);
 }
 
