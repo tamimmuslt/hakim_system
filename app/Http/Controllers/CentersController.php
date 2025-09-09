@@ -37,6 +37,7 @@ class CentersController extends Controller
             'longitude' => 'sometimes|required|numeric',
             'is_approved' => 'sometimes|boolean',
         ]);
+        
 
         if ($validator->fails()) return response()->json(['errors' => $validator->errors()], 422);
 

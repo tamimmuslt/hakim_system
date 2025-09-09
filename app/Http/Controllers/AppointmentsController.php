@@ -127,74 +127,84 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointments;
 use App\Models\Notifications;
+use App\Jobs\SendAppointmentReminder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class AppointmentsController extends Controller
 {
-    // ✅ عرض المواعيد المتاحة فقط
+    /**
+     * ✅ عرض جميع المواعيد المتاحة فقط
+     */
     public function index()
     {
         $appointments = Appointments::with(['doctor', 'service'])
-            ->where('status', 'available') // فقط المتاحة
+            ->where('status', 'available')
             ->get();
 
         return response()->json($appointments);
     }
 
-    // ✅ إنشاء موعد مع إشعارات تأكيد + تذكير
+    /**
+     * ✅ إنشاء موعد جديد مع التحقق + إشعارات + تذكير
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,user_id',
-            'doctor_id' => 'required|exists:doctors,doctor_id',
-            'service_id' => 'required|exists:services,service_id',
+            'user_id'              => 'required|exists:users,user_id',
+            'doctor_id'            => 'required|exists:doctors,doctor_id',
+            'service_id'           => 'required|exists:services,service_id',
             'appointment_datetime' => 'required|date',
-            'notes' => 'nullable|string',
+            'notes'                => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // 🔹 إنشاء الموعد مباشرة بحالة approved
+        // ✅ التحقق إذا الموعد محجوز مسبقًا
+        $exists = Appointments::where('doctor_id', $request->doctor_id)
+            ->where('appointment_datetime', $request->appointment_datetime)
+            ->where('status', 'scheduled')
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'الموعد غير متاح'], 400);
+        }
+
+        // ✅ إنشاء الموعد
         $appointment = Appointments::create([
-            'user_id' => $request->user_id,
-            'doctor_id' => $request->doctor_id,
-            'service_id' => $request->service_id,
+            'user_id'              => $request->user_id,
+            'doctor_id'            => $request->doctor_id,
+            'service_id'           => $request->service_id,
             'appointment_datetime' => $request->appointment_datetime,
-            'status' => 'approved',
-            'notes' => $request->notes,
+            'status'               => 'scheduled',
+            'notes'                => $request->notes,
         ]);
 
-        $patient = $appointment->user;
-        $doctor  = $appointment->doctor;
-
-        // 1️⃣ إشعار فوري للمريض
+        // ✅ إشعار تأكيد للمريض
         Notifications::create([
-            'user_id' => $patient->user_id,
-            'message_text' => "✅ تم تأكيد حجزك مع الدكتور {$doctor->name} بتاريخ {$appointment->appointment_datetime}",
-            'type' => 'confirmation',
+            'user_id'      => $appointment->user_id,
+            'message_text' => "تم حجز موعدك مع الدكتور {$appointment->doctor->name} بتاريخ " .
+                              Carbon::parse($appointment->appointment_datetime)->format('Y-m-d H:i') . ".",
+            'is_read'      => false,
+            'type'         => 'confirmation',
         ]);
 
-        // 2️⃣ إشعار تذكير قبل ساعتين
+        // ✅ جدولة تذكير قبل ساعتين
         $reminderTime = Carbon::parse($appointment->appointment_datetime)->subHours(2);
-
-        Notifications::create([
-            'user_id' => $patient->user_id,
-            'message_text' => "⏰ تذكير: لديك موعد مع الدكتور {$doctor->name} بعد ساعتين.",
-            'type' => 'reminder',
-            'scheduled_at' => $reminderTime,
-        ]);
+        SendAppointmentReminder::dispatch($appointment)->delay($reminderTime);
 
         return response()->json([
-            'message' => 'تم حجز الموعد وتأكيده. تم إضافة إشعار التذكير قبل ساعتين.',
+            'message'     => 'تم الحجز بنجاح',
             'appointment' => $appointment
         ], 201);
     }
 
-    // ✅ عرض تفاصيل موعد واحد
+    /**
+     * ✅ عرض موعد واحد
+     */
     public function show($id)
     {
         $appointment = Appointments::with(['user', 'doctor', 'service'])->find($id);
@@ -206,7 +216,9 @@ class AppointmentsController extends Controller
         return response()->json($appointment);
     }
 
-    // ✅ تعديل موعد
+    /**
+     * ✅ تعديل موعد
+     */
     public function update(Request $request, $id)
     {
         $appointment = Appointments::find($id);
@@ -216,11 +228,11 @@ class AppointmentsController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'doctor_id' => 'sometimes|exists:doctors,doctor_id',
-            'service_id' => 'sometimes|exists:services,service_id',
+            'doctor_id'            => 'sometimes|exists:doctors,doctor_id',
+            'service_id'           => 'sometimes|exists:services,service_id',
             'appointment_datetime' => 'sometimes|date',
-            'status' => 'sometimes|in:available,approved,completed,cancelled,no_show',
-            'notes' => 'nullable|string',
+            'status'               => 'sometimes|in:available,scheduled,completed,cancelled,no_show',
+            'notes'                => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -230,12 +242,14 @@ class AppointmentsController extends Controller
         $appointment->update($request->all());
 
         return response()->json([
-            'message' => 'تم تعديل الموعد بنجاح',
+            'message'     => 'تم تعديل الموعد بنجاح',
             'appointment' => $appointment
         ]);
     }
 
-    // ✅ حذف موعد
+    /**
+     * ✅ حذف موعد
+     */
     public function destroy($id)
     {
         $appointment = Appointments::find($id);

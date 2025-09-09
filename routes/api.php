@@ -209,7 +209,8 @@ use App\Http\Controllers\{
     AdminController,
     PatientController,
     ReportController,
-    SearchController
+    SearchController,
+    DeviceTokenController
 };
 
 // 🔹 Authentication
@@ -300,23 +301,39 @@ Route::delete('/lab-tests/{id}', [LabTestsController::class, 'destroy']);
     // 🔹 Reviews
     Route::apiResource('reviews', ReviewsController::class)->except(['update']);
 
-    // 🔹 Admin Actions
-    Route::prefix('admin')->group(function () {
-        Route::get('/doctors', [AdminController::class, 'doctors']);
-        Route::post('/approve-doctor/{id}', [AdminController::class, 'approveDoctor']);
+//     // 🔹 Admin Actions
+//     Route::prefix('admin')->group(function () {
+//         Route::get('/doctors', [AdminController::class, 'doctors']);
+//         Route::post('/approve-doctor/{id}', [AdminController::class, 'approveDoctor']);
 
-        Route::get('/users', [AdminController::class, 'users']);
-        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+//         Route::get('/users', [AdminController::class, 'users']);
+//         Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
 
-        Route::post('/approve-center/{id}', [AdminController::class, 'approveCenter']);
-        Route::delete('/centers/{id}', [AdminController::class, 'deleteCenter']);
+//         Route::post('/approve-center/{id}', [AdminController::class, 'approveCenter']);
+//         Route::delete('/centers/{id}', [AdminController::class, 'deleteCenter']);
 
-        Route::post('/add-admin', [AdminController::class, 'addAdmin']);
-        Route::post('/add-center', [AdminController::class, 'addCenter']);
+//         Route::post('/add-admin', [AdminController::class, 'addAdmin']);
+//         Route::post('/add-center', [AdminController::class, 'addCenter']);
 
-        Route::post('/add-promotion', [AdminController::class, 'addPromotion']);
-        Route::post('/promotions/{id}/approve', [AdminController::class, 'approvePromotion']);
-    });
+//         Route::post('/add-promotion', [AdminController::class, 'addPromotion']);
+//         Route::post('/promotions/{id}/approve', [AdminController::class, 'approvePromotion']);
+//     });
+// });
+Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
+    Route::get('/doctors', [AdminController::class, 'doctors']);
+    Route::post('/approve-doctor/{id}', [AdminController::class, 'approveDoctor']);
+
+    Route::get('/users', [AdminController::class, 'users']);
+    Route::delete('/users/{id}', [AdminController::class, 'deleteUser']);
+
+    Route::post('/approve-center/{id}', [AdminController::class, 'approveCenter']);
+    Route::delete('/centers/{id}', [AdminController::class, 'deleteCenter']);
+
+    Route::post('/add-admin', [AdminController::class, 'addAdmin']);
+    Route::post('/add-center', [AdminController::class, 'addCenter']);
+
+    Route::post('/add-promotion', [AdminController::class, 'addPromotion']);
+    Route::post('/promotions/{id}/approve', [AdminController::class, 'approvePromotion']);
 });
 
 // 🔹 Centers (Some public, some protected)
@@ -352,3 +369,7 @@ Route::middleware(['auth:api', 'is_super_admin'])->group(function () {
 Route::get('/search', [SearchController::class, 'searchAll']);
 
 Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
+
+
+// routes/api.php
+Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
