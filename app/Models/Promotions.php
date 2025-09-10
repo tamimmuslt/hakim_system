@@ -16,7 +16,8 @@ class Promotions extends Model
          'end_date',
          'discount_percent',
           'price_after_discount',
-           'is_active'
+           'is_active',
+           'image'
     ];
 
     public function center()

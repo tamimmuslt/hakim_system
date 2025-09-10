@@ -481,7 +481,7 @@ Route::middleware(['auth:api', 'verifyEmailCode'])->group(function () {
 });
 
 // 🔹 Admin Actions
-Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
+Route::prefix('admin')->middleware(['auth:api'])->group(function () {
     Route::get('/doctors', [AdminController::class, 'doctors']);
     Route::post('/approve-doctor/{id}', [AdminController::class, 'approveDoctor']);
 
