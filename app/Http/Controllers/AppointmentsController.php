@@ -134,80 +134,98 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
 class AppointmentsController extends Controller
 {
     
      // ✅ عرض جميع المواعيد المتاحة فقط
 
+
 public function index(Request $request)
 {
-    $doctor_id = $request->query('doctor_id');
-    $date = $request->query('date', Carbon::today()->toDateString()); // افتراضي اليوم
+    $user = Auth::user();
+    $date = $request->query('date', Carbon::today()->toDateString());
 
-    if (!$doctor_id) {
-        return response()->json(['message' => 'doctor_id is required'], 422);
-    }
-
-    // تحقق من أن الطبيب موافق عليه
-    $doctor = Doctor::find($doctor_id);
-    if (!$doctor || $doctor->is_approved != 1) {
-        return response()->json([
-            'doctor_id' => $doctor_id,
-            'date' => $date,
-            'slots' => [],
-            'message' => 'Doctor is not approved or does not exist'
-        ]);
-    }
-
-    // مصفوفة لترجمة رقم اليوم إلى نص
-    $days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-    $dayOfWeekNumber = Carbon::parse($date)->dayOfWeek; // 0=Sunday, 1=Monday, ..., 6=Saturday
-    $dayOfWeek = $days[$dayOfWeekNumber];
-
-    // جلب توافر الطبيب لذلك اليوم
-    $availability = DoctorAvailability::where('doctor_id', $doctor_id)
-        ->where('day_of_week', $dayOfWeek)
-        ->first();
-
-    if (!$availability) {
-        return response()->json([
-            'doctor_id' => $doctor_id,
-            'date' => $date,
-            'slots' => []
-        ]);
-    }
-
-    $start = Carbon::parse($availability->start_time);
-    $end   = Carbon::parse($availability->end_time);
     $slots = [];
 
-    while ($start < $end) {
-        $slotStart = $start->copy();
-        $slotEnd   = $start->copy()->addMinutes(30);
-
-        // تحقق إذا هذا الموعد محجوز مسبقًا داخل فترة الـ slot
-        $exists = Appointments::where('doctor_id', $doctor_id)
+    // إذا المستخدم مريض، نرجع مواعيده المحجوزة
+    if ($user->user_type === 'patient') {
+        $appointments = Appointments::where('user_id', $user->user_id)
+            ->whereDate('appointment_datetime', $date)
             ->where('status', 'scheduled')
-            ->whereBetween('appointment_datetime', [
-                $date . ' ' . $slotStart->format('H:i:s'),
-                $date . ' ' . $slotEnd->format('H:i:s')
-            ])
-            ->exists();
+            ->with('doctor.user', 'service')
+            ->get();
 
-        if (!$exists) {
-            $slots[] = $slotStart->format('H:i');
+        return response()->json([
+            'user_type' => 'patient',
+            'user_id' => $user->user_id,
+            'date' => $date,
+            'appointments' => $appointments
+        ]);
+    }
+
+    // إذا المستخدم طبيب، نرجع المواعيد المتاحة له + المحجوزة
+    if ($user->user_type === 'Doctor') {
+        $doctor = Doctor::where('user_id', $user->user_id)->first();
+
+        if (!$doctor || $doctor->is_approved != 1) {
+            return response()->json([
+                'doctor_id' => $doctor->doctor_id ?? null,
+                'date' => $date,
+                'slots' => [],
+                'message' => 'Doctor is not approved or does not exist'
+            ]);
         }
 
-        $start->addMinutes(30); // الانتقال للـ slot التالي
+        // مصفوفة لترجمة رقم اليوم إلى نص
+        $days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+        $dayOfWeekNumber = Carbon::parse($date)->dayOfWeek;
+        $dayOfWeek = $days[$dayOfWeekNumber];
+
+        // جلب توافر الطبيب لذلك اليوم
+        $availability = DoctorAvailability::where('doctor_id', $doctor->doctor_id)
+            ->where('day_of_week', $dayOfWeek)
+            ->first();
+
+        if ($availability) {
+            $start = Carbon::parse($availability->start_time);
+            $end   = Carbon::parse($availability->end_time);
+
+            while ($start < $end) {
+                $slotStart = $start->copy();
+                $slotEnd   = $start->copy()->addMinutes(30);
+
+                // تحقق إذا هذا الموعد محجوز مسبقًا
+                $exists = Appointments::where('doctor_id', $doctor->doctor_id)
+                    ->where('status', 'scheduled')
+                    ->whereBetween('appointment_datetime', [
+                        $date . ' ' . $slotStart->format('H:i:s'),
+                        $date . ' ' . $slotEnd->format('H:i:s')
+                    ])
+                    ->exists();
+
+                $slots[] = [
+                    'time' => $slotStart->format('H:i'),
+                    'is_booked' => $exists
+                ];
+
+                $start->addMinutes(30);
+            }
+        }
+
+        return response()->json([
+            'user_type' => 'Doctor',
+            'doctor_id' => $doctor->doctor_id,
+            'date' => $date,
+            'slots' => $slots
+        ]);
     }
 
     return response()->json([
-        'doctor_id' => $doctor_id,
-        'date' => $date,
-        'slots' => $slots
-    ]);
+        'message' => 'User type not supported'
+    ], 422);
 }
+
 
     /**
      * ✅ إنشاء موعد جديد مع التحقق + إشعارات + تذكير
