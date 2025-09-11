@@ -31,7 +31,6 @@ class DoctorController extends Controller
         'specialty' => 'required|string',
         'phone'     => 'required|string|max:20',
         'service_id' => 'required|exists:Services,service_id', // <== أضف هذا
-
     ]);
 
     if ($validator->fails()) {

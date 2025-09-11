@@ -431,13 +431,25 @@ Route::middleware(['auth:api', 'verifyEmailCode'])->group(function () {
     Route::delete('/availability/{id}', [DoctorAvailabilityController::class, 'destroy']);
 
     // 🔹 Appointments
-    Route::get('/appointments', [AppointmentsController::class, 'index']);
-    Route::post('/appointments', [AppointmentsController::class, 'store']);
-    Route::get('/appointments/{id}', [AppointmentsController::class, 'show']);
-    Route::put('/appointments/{id}', [AppointmentsController::class, 'update']);
-    Route::delete('/appointments/{id}', [AppointmentsController::class, 'destroy']);
+//  Route::get('/appointments/available', [AppointmentsController::class, 'index']);
 
-    // 🔹 Medical Records
+// // 2️⃣ حجز موعد جديد (المريض)
+// Route::post('/appointments/book', [AppointmentsController::class, 'book']);
+
+// // 3️⃣ عرض تفاصيل موعد واحد
+// Route::get('/appointments/{id}', [AppointmentsController::class, 'show']);
+
+// // 4️⃣ تعديل موعد (حسب الصلاحية)
+// Route::put('/appointments/{id}', [AppointmentsController::class, 'update']);
+
+// // 5️⃣ حذف / إلغاء موعد
+// Route::delete('/appointments/{id}', [AppointmentsController::class, 'destroy']);
+
+// // ============================================
+// // Optional: إذا بدك تقسيم حسب الطبيب
+// // جلب السلوتات المتاحة لطبيب معين
+// Route::get('/doctors/{doctorId}/available-slots', [AppointmentsController::class, 'availableSlots']);
+//     // 🔹 Medical Records
     Route::get('/records', [MedicalRecordsController::class, 'index']);
     Route::post('/records', [MedicalRecordsController::class, 'store']);
     Route::get('/records/{id}', [MedicalRecordsController::class, 'show']);
@@ -529,3 +541,33 @@ Route::middleware(['auth:api', 'is_super_admin'])->group(function () {
 // 🔹 Search
 Route::get('/search', [SearchController::class, 'searchAll']);
 Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
+
+// Route::middleware(['auth:api', 'verifyEmailCode'])->group(function () {
+
+//     // عرض جميع المواعيد الخاصة بالمستخدم
+//     Route::get('/appointments', [AppointmentsController::class, 'index']);
+
+//     // حجز موعد جديد
+//     Route::post('/appointments', [AppointmentsController::class, 'book']); // بدل '/book'
+
+//     // عرض تفاصيل موعد محدد
+//     Route::get('/appointments/{id}', [AppointmentsController::class, 'show']);
+
+//     // تعديل موعد (حسب صلاحيات المستخدم)
+//     Route::put('/appointments/{id}', [AppointmentsController::class, 'update']);
+
+    // إلغاء أو حذف موعد
+//     Route::delete('/appointments/{id}', [AppointmentsController::class, 'destroy']);
+
+//     // عرض الأوقات المتاحة لطبيب محدد
+//     Route::get('/doctors/{doctor_id}/available-slots', [AppointmentsController::class, 'availableSlots']);
+// });
+Route::group(['middleware' => ['auth:api']], function () {
+    Route::get('/appointments', [AppointmentsController::class, 'index']);
+    Route::post('/appointments', [AppointmentsController::class, 'store']);
+    Route::get('/appointments/{id}', [AppointmentsController::class, 'show']);
+    Route::put('/appointments/{id}', [AppointmentsController::class, 'update']);
+    Route::delete('/appointments/{id}', [AppointmentsController::class, 'destroy']);
+});
+
+Route::get('/appointments/available/{doctor_id}', [AppointmentsController::class, 'availableSlots']);
